@@ -20,7 +20,6 @@ LiDAR-based mapless goal-reaching navigation for a TurtleBot3, learned end-to-en
 - [Team](#team)
 - [Documentation](#documentation)
 - [References and Acknowledgements](#references-and-acknowledgements)
-- [License](#license)
 
 ---
 
@@ -271,7 +270,3 @@ A tiered contingency plan, detailed in the knowledge document, safeguards the sc
 - Related deep reinforcement learning navigation projects that informed this work, including `reiniscimurs/DRL-Robot-Navigation-ROS2` and `tomasvr/turtlebot3_drlnav`.
 
 ---
-
-## License
-
-Released under the [MIT License](LICENSE).
