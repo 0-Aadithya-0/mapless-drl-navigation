@@ -1,9 +1,0 @@
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/uninstall.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/custom_world_uninstall.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/test.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/edit_cache.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/rebuild_cache.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/list_install_components.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/install.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/install/local.dir
-/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world/CMakeFiles/install/strip.dir
