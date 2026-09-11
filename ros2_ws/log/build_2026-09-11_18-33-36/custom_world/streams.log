@@ -1,0 +1,42 @@
+[0.011s] Invoking command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/aadithya/mapless-drl-navigation/ros2_ws/src/custom_world -DCMAKE_INSTALL_PREFIX=/home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world
+[0.302s] -- The C compiler identification is GNU 11.4.0
+[0.852s] -- The CXX compiler identification is GNU 11.4.0
+[1.164s] -- Detecting C compiler ABI info
+[1.288s] -- Detecting C compiler ABI info - done
+[1.292s] -- Check for working C compiler: /usr/bin/cc - skipped
+[1.293s] -- Detecting C compile features
+[1.294s] -- Detecting C compile features - done
+[1.296s] -- Detecting CXX compiler ABI info
+[1.554s] -- Detecting CXX compiler ABI info - done
+[1.558s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.558s] -- Detecting CXX compile features
+[1.558s] -- Detecting CXX compile features - done
+[1.570s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[1.671s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.752s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.815s] -- Added test 'lint_cmake' to check CMake code style
+[1.816s] -- Added test 'xmllint' to check XML markup files
+[1.819s] -- Configuring done
+[1.822s] -- Generating done
+[1.823s] -- Build files have been written to: /home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world
+[1.827s] Invoked command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/aadithya/mapless-drl-navigation/ros2_ws/src/custom_world -DCMAKE_INSTALL_PREFIX=/home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world
+[1.828s] Invoking command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world -- -j12 -l12
+[1.851s] Invoked command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world -- -j12 -l12
+[1.857s] Invoking command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world
+[1.861s] -- Install configuration: ""
+[1.862s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/ament_index/resource_index/package_run_dependencies/custom_world
+[1.862s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/ament_index/resource_index/parent_prefix_path/custom_world
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/environment/ament_prefix_path.sh
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/environment/ament_prefix_path.dsv
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/environment/path.sh
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/environment/path.dsv
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/local_setup.bash
+[1.863s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/local_setup.sh
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/local_setup.zsh
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/local_setup.dsv
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/package.dsv
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/ament_index/resource_index/packages/custom_world
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/cmake/custom_worldConfig.cmake
+[1.864s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/cmake/custom_worldConfig-version.cmake
+[1.865s] -- Installing: /home/aadithya/mapless-drl-navigation/ros2_ws/install/custom_world/share/custom_world/package.xml
+[1.866s] Invoked command in '/home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/aadithya/mapless-drl-navigation/ros2_ws/build/custom_world

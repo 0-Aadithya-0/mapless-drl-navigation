@@ -1,4 +1,4 @@
 # Ignore runs/, checkpoints/, __pycache__, ROS build/ install/ log/
-build/
-install/
-log/
+ros2_w/build/
+ros2_w/install/
+ros2_w/log/
