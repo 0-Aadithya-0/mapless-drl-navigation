@@ -62,6 +62,9 @@ The data flow, per timestep:
 
 The Gymnasium environment constitutes the single interface between the robotics stack and the reinforcement learning stack. The learning code interacts only through `reset()` and `step(action)`. On benchmark tasks this environment is provided by Gymnasium directly (for example `CartPole-v1`); on the robot it is the ROS-backed `TurtleBotEnv`. The same agent code trains against either environment without modification.
 
+aadithya@Orange:~/mapless-drl-navigation$ export GAZEBO_MODEL_PATH=~/mapless-drl-navigation/ros2_ws/src/custom_world/models:$GAZEBO_MODEL_PATH
+gazebo ~/mapless-drl-navigation/ros2_ws/src/custom_world/worlds/showcase.world 
+
 A rendered architecture diagram is available at `docs/control-loop.svg`.
 
 ---
