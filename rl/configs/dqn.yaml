@@ -1,1 +1,25 @@
-# DQN hyperparameters
+# DQN hyperparameters — Week 2 (obstacle avoidance on TurtleBot3)
+
+seed: 0
+
+# environment shape (must match env.py)
+state_dim: 24          # 24 downsampled LiDAR beams
+n_actions: 4           # 0=forward, 1=left, 2=right, 3=stop
+
+# learning
+gamma: 0.99            # how much future reward matters
+lr: 0.0005             # learning rate (a bit lower than CartPole — robot data is noisier)
+buffer_size: 50000     # replay memory size
+batch_size: 64
+target_update_every: 500   # sync target network every N learning steps
+learning_starts: 1000      # collect this many steps (random actions) before learning
+
+# exploration (epsilon-greedy)
+eps_start: 1.0
+eps_end: 0.05
+eps_decay: 0.997       # multiply epsilon by this each episode
+
+# run length
+max_episodes: 600
+max_steps: 500         # step limit per episode (truncation)
+save_every: 50         # save a checkpoint every N episodes
