@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import time
 from typing import Any
 
@@ -18,65 +17,68 @@ from .ros_interface import ROSInterfaceRunner
 
 class TurtleBotEnv(gym.Env):
     """
-    Gymnasium environment for TurtleBot3 obstacle avoidance in Gazebo.
+    Gymnasium environment for TurtleBot3 obstacle avoidance.
 
-    Observation:
-        24 normalized LiDAR beams.
+    Week 2 DQN environment:
 
-    Actions:
-        0 -> forward
-        1 -> left
-        2 -> right
-        3 -> stop
+        Observation:
+            24 normalized LiDAR beams in [0, 1]
 
-    Reward:
-        Positive for forward motion.
-        Negative for collision.
+        Actions:
+            0 = forward
+            1 = left
+            2 = right
+            3 = stop
 
-    Termination:
-        Collision -> terminated=True
-        Maximum episode length -> truncated=True
+        Termination:
+            collision
+
+        Truncation:
+            maximum episode length
+
+    ROS communication is handled entirely by ROSInterfaceRunner.
     """
 
     metadata = {"render_modes": []}
 
-    # ------------------------------------------------------------------
-    # Action parameters
-    # ------------------------------------------------------------------
-
-    FORWARD_LINEAR_VELOCITY = 0.15
-    TURN_ANGULAR_VELOCITY = 0.8
+    # ==================================================================
+    # Action definitions
+    # ==================================================================
 
     ACTIONS = {
-        0: (FORWARD_LINEAR_VELOCITY, 0.0),   # forward
-        1: (0.0, TURN_ANGULAR_VELOCITY),     # left
-        2: (0.0, -TURN_ANGULAR_VELOCITY),   # right
-        3: (0.0, 0.0),                       # stop
+        0: (0.15, 0.0),   # forward
+        1: (0.0, 0.8),    # left
+        2: (0.0, -0.8),   # right
+        3: (0.0, 0.0),    # stop
     }
 
-    # ------------------------------------------------------------------
-    # Environment parameters
-    # ------------------------------------------------------------------
+    # ==================================================================
+    # Environment configuration
+    # ==================================================================
 
     CONTROL_DT = 0.20
 
     COLLISION_DISTANCE = 0.18
+    COLLISION_REWARD = -10.0
 
     MAX_EPISODE_STEPS = 500
 
+    # Stage 2 center is a safe starting point.
     START_X = 0.0
     START_Y = 0.0
     START_YAW = 0.0
+    START_Z = 0.01
 
-    COLLISION_REWARD = -10.0
+    SENSOR_TIMEOUT = 2.0
+
+    # ==================================================================
+    # Initialization
+    # ==================================================================
 
     def __init__(self) -> None:
         super().__init__()
 
-        # --------------------------------------------------------------
-        # Gymnasium spaces
-        # --------------------------------------------------------------
-
+        # 24 normalized LiDAR values.
         self.observation_space = spaces.Box(
             low=0.0,
             high=1.0,
@@ -84,23 +86,15 @@ class TurtleBotEnv(gym.Env):
             dtype=np.float32,
         )
 
+        # 4 discrete actions.
         self.action_space = spaces.Discrete(4)
-
-        # --------------------------------------------------------------
-        # ROS interface
-        # --------------------------------------------------------------
 
         self.ros = ROSInterfaceRunner()
 
-        # --------------------------------------------------------------
-        # Episode state
-        # --------------------------------------------------------------
-
         self.current_step = 0
-        self.previous_linear_velocity = 0.0
 
     # ==================================================================
-    # Gymnasium API
+    # Gymnasium reset
     # ==================================================================
 
     def reset(
@@ -110,95 +104,106 @@ class TurtleBotEnv(gym.Env):
         options: dict[str, Any] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         """
-        Reset the environment and return the first observation.
+        Reset the environment and return the initial observation.
         """
-
         super().reset(seed=seed)
 
         self.current_step = 0
-        self.previous_linear_velocity = 0.0
 
-        # Always stop before resetting.
+        # Make sure the robot is not carrying velocity from
+        # the previous episode.
         self.ros.node.stop_robot()
 
-        # Reset the robot's simulator pose.
-        #
-        # The actual Gazebo pose-reset implementation will be wired
-        # through the ROS/Gazebo interface. Keeping this as a separate
-        # method prevents simulator-specific logic from spreading
-        # through the Gymnasium code.
-        self._reset_robot_pose()
+        # Discard old sensor data.
+        self.ros.clear_sensor_data()
 
-        # Wait until fresh sensor data is available.
+        # Teleport Burger to the starting pose.
+        self.ros.reset_robot_pose(
+            x=self.START_X,
+            y=self.START_Y,
+            yaw=self.START_YAW,
+            z=self.START_Z,
+            timeout=self.SENSOR_TIMEOUT,
+        )
+
+        # Stop again after teleportation.
+        self.ros.node.stop_robot()
+
+        # Wait for new /scan and /odom messages.
         self._wait_for_sensor_data()
 
         scan = self.ros.node.get_latest_scan()
 
         if scan is None:
-            raise RuntimeError("No LiDAR data received during reset.")
+            raise RuntimeError(
+                "No LiDAR data received after environment reset."
+            )
 
         observation = process_lidar_scan(scan)
 
         self._validate_observation(observation)
 
         info = {
-            "step": self.current_step,
+            "step": 0,
             "collision": False,
+            "min_lidar_distance": self._minimum_lidar_distance(scan),
         }
 
         return observation, info
 
+    # ==================================================================
+    # Gymnasium step
+    # ==================================================================
+
     def step(
         self,
         action: int,
-    ) -> tuple[
-        np.ndarray,
-        float,
-        bool,
-        bool,
-        dict[str, Any],
-    ]:
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         """
-        Apply one discrete action and advance the environment.
+        Execute one discrete action.
         """
 
         if not self.action_space.contains(action):
-            raise ValueError(f"Invalid action: {action}")
+            raise ValueError(
+                f"Invalid action {action}. "
+                f"Expected an integer in [0, 3]."
+            )
 
-        # --------------------------------------------------------------
-        # 1. Convert action → velocity
-        # --------------------------------------------------------------
+        action = int(action)
 
-        linear_velocity, angular_velocity = self.ACTIONS[int(action)]
+        linear_velocity, angular_velocity = self.ACTIONS[action]
 
+        # We want the sensor data produced by this action,
+        # not a previously cached message.
+        self.ros.clear_sensor_data()
+
+        # Send action to the robot.
         self.ros.node.publish_velocity(
-            linear_velocity,
-            angular_velocity,
+            linear_x=linear_velocity,
+            angular_z=angular_velocity,
         )
 
-        # --------------------------------------------------------------
-        # 2. Allow Gazebo to execute the command
-        # --------------------------------------------------------------
-
+        # Hold the action for the control interval.
         time.sleep(self.CONTROL_DT)
 
-        # --------------------------------------------------------------
-        # 3. Read latest sensor data
-        # --------------------------------------------------------------
-
+        # Make sure fresh data has arrived.
         self._wait_for_sensor_data()
 
         scan = self.ros.node.get_latest_scan()
         odom = self.ros.node.get_latest_odom()
 
         if scan is None:
-            raise RuntimeError("No LiDAR data received during step().")
+            raise RuntimeError(
+                "No LiDAR data received during environment step."
+            )
 
         if odom is None:
-            raise RuntimeError("No odometry data received during step().")
+            raise RuntimeError(
+                "No odometry data received during environment step."
+            )
 
         # --------------------------------------------------------------
-        # 4. Build observation
+        # Observation
         # --------------------------------------------------------------
 
         observation = process_lidar_scan(scan)
@@ -206,28 +211,31 @@ class TurtleBotEnv(gym.Env):
         self._validate_observation(observation)
 
         # --------------------------------------------------------------
-        # 5. Collision detection
+        # Collision detection
         # --------------------------------------------------------------
 
         min_distance = self._minimum_lidar_distance(scan)
 
-        collision = min_distance <= self.COLLISION_DISTANCE
+        collision = (
+            min_distance <= self.COLLISION_DISTANCE
+        )
 
         # --------------------------------------------------------------
-        # 6. Reward
+        # Reward
         # --------------------------------------------------------------
 
         forward_velocity = float(
             odom.twist.twist.linear.x
         )
 
+        # Forward displacement during this control interval.
         reward = forward_velocity * self.CONTROL_DT
 
         if collision:
             reward += self.COLLISION_REWARD
 
         # --------------------------------------------------------------
-        # 7. Episode bookkeeping
+        # Episode state
         # --------------------------------------------------------------
 
         self.current_step += 1
@@ -239,10 +247,7 @@ class TurtleBotEnv(gym.Env):
             and not terminated
         )
 
-        # --------------------------------------------------------------
-        # 8. Stop immediately after collision
-        # --------------------------------------------------------------
-
+        # Always stop after a terminal collision.
         if terminated:
             self.ros.node.stop_robot()
 
@@ -250,7 +255,7 @@ class TurtleBotEnv(gym.Env):
             "step": self.current_step,
             "collision": collision,
             "min_lidar_distance": min_distance,
-            "forward_velocity": forward_velocity,
+            "linear_velocity": forward_velocity,
         }
 
         return (
@@ -262,12 +267,46 @@ class TurtleBotEnv(gym.Env):
         )
 
     # ==================================================================
-    # Internal helpers
+    # Sensor synchronization
     # ==================================================================
 
-    def _minimum_lidar_distance(self, scan: Any) -> float:
+    def _wait_for_sensor_data(
+        self,
+        timeout: float | None = None,
+    ) -> None:
         """
-        Return the minimum valid LiDAR distance.
+        Wait until both LiDAR and odometry data are available.
+        """
+
+        if timeout is None:
+            timeout = self.SENSOR_TIMEOUT
+
+        start_time = time.monotonic()
+
+        while time.monotonic() - start_time < timeout:
+
+            scan = self.ros.node.get_latest_scan()
+            odom = self.ros.node.get_latest_odom()
+
+            if scan is not None and odom is not None:
+                return
+
+            time.sleep(0.01)
+
+        raise TimeoutError(
+            "Timed out waiting for /scan and /odom data."
+        )
+
+    # ==================================================================
+    # LiDAR processing for collision detection
+    # ==================================================================
+
+    @staticmethod
+    def _minimum_lidar_distance(
+        scan: Any,
+    ) -> float:
+        """
+        Return the minimum valid LiDAR distance in meters.
         """
 
         ranges = np.asarray(
@@ -278,11 +317,12 @@ class TurtleBotEnv(gym.Env):
         if ranges.size == 0:
             return LIDAR_MAX_RANGE
 
+        # No-return values are not collisions.
         ranges = np.nan_to_num(
             ranges,
             nan=LIDAR_MAX_RANGE,
             posinf=LIDAR_MAX_RANGE,
-            neginf=0.0,
+            neginf=LIDAR_MAX_RANGE,
         )
 
         ranges = np.clip(
@@ -293,82 +333,48 @@ class TurtleBotEnv(gym.Env):
 
         return float(np.min(ranges))
 
-    def _wait_for_sensor_data(
-        self,
-        timeout: float = 2.0,
-    ) -> None:
-        """
-        Wait until both LiDAR and odometry data are available.
-        """
-
-        start_time = time.monotonic()
-
-        while time.monotonic() - start_time < timeout:
-            scan = self.ros.node.get_latest_scan()
-            odom = self.ros.node.get_latest_odom()
-
-            if scan is not None and odom is not None:
-                return
-
-            time.sleep(0.01)
-
-        raise TimeoutError(
-            "Timed out waiting for /scan and /odom."
-        )
+    # ==================================================================
+    # Observation validation
+    # ==================================================================
 
     def _validate_observation(
         self,
         observation: np.ndarray,
     ) -> None:
-        """
-        Verify the observation satisfies the environment contract.
-        """
+        """Validate the fixed Week 2 observation contract."""
 
         if observation.shape != (NUM_BEAMS,):
-            raise ValueError(
-                f"Expected observation shape "
-                f"{(NUM_BEAMS,)}, got {observation.shape}"
+            raise RuntimeError(
+                f"Invalid observation shape: "
+                f"{observation.shape}. "
+                f"Expected ({NUM_BEAMS},)."
             )
 
         if observation.dtype != np.float32:
-            raise ValueError(
-                f"Expected float32 observation, "
-                f"got {observation.dtype}"
+            raise RuntimeError(
+                f"Invalid observation dtype: "
+                f"{observation.dtype}. "
+                "Expected float32."
             )
 
         if not np.all(np.isfinite(observation)):
-            raise ValueError(
+            raise RuntimeError(
                 "Observation contains NaN or infinite values."
             )
 
-        if np.any(observation < 0.0) or np.any(observation > 1.0):
-            raise ValueError(
-                "Observation values must lie in [0, 1]."
+        if np.any(observation < 0.0) or np.any(
+            observation > 1.0
+        ):
+            raise RuntimeError(
+                "Observation contains values outside [0, 1]."
             )
-
-    def _reset_robot_pose(self) -> None:
-        """
-        Reset the Burger to the configured starting pose.
-
-        Simulator-specific pose-reset communication will be implemented
-        in the ROS/Gazebo interface so that env.py remains focused on
-        Gymnasium semantics.
-        """
-
-        self.ros.reset_robot_pose(
-            x=self.START_X,
-            y=self.START_Y,
-            yaw=self.START_YAW,
-        )
 
     # ==================================================================
     # Cleanup
     # ==================================================================
 
     def close(self) -> None:
-        """
-        Stop the robot and shut down ROS.
-        """
+        """Stop the robot and shut down ROS."""
 
         self.ros.node.stop_robot()
         self.ros.shutdown()
