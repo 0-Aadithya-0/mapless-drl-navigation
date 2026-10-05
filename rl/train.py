@@ -1,107 +1,303 @@
-"""Train the DQN.
 
-Works on the robot (--env turtlebot) and on CartPole (--env cartpole), so you can
-test the agent on CartPole before the robot environment is ready. The agent, buffer,
-and learning are identical for both — only the environment changes.
-
-Run from the repo root:
-    python -m rl.train --env turtlebot
-    python -m rl.train --env cartpole     # quick sanity check, no ROS needed
 """
+Train a DQN on the TurtleBot3 obstacle-avoidance environment.
+
+Run from the repository root:
+
+    python -m rl.train
+
+Training configuration is loaded from:
+
+    rl/configs/dqn.yaml
+
+The trained checkpoints are saved under:
+
+    checkpoints/
+"""
+
+from __future__ import annotations
+
 import argparse
 import os
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from rl.utils.seeding import set_seed
-from rl.utils.config import load_config
 from rl.agents.dqn import DQNAgent
+from rl.utils.config import load_config
+from rl.utils.seeding import set_seed
+from turtlebot3_rl_nav.env import TurtleBotEnv
 
 
-def make_env(name, max_steps):
-    if name == "cartpole":
-        import gymnasium as gym
-        return gym.make("CartPole-v1", max_episode_steps=max_steps)
-    if name == "turtlebot":
-        # imported only when needed, so CartPole runs without ROS installed
-        from turtlebot3_rl_nav.env import TurtleBotEnv
-        return TurtleBotEnv(max_episode_steps=max_steps)
-    raise ValueError(f"unknown env: {name}")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Train DQN on TurtleBot3 obstacle avoidance."
+    )
 
+    parser.add_argument(
+        "--config",
+        default="rl/configs/dqn.yaml",
+        help="Path to the DQN configuration file.",
+    )
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--env", choices=["turtlebot", "cartpole"], default="turtlebot")
-    p.add_argument("--config", default="rl/configs/dqn.yaml")
-    args = p.parse_args()
+    args = parser.parse_args()
+
+    # --------------------------------------------------------------
+    # Configuration
+    # --------------------------------------------------------------
 
     cfg = load_config(args.config)
-    set_seed(cfg["seed"])
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    env = make_env(args.env, cfg["max_steps"])
+    set_seed(cfg["seed"])
+
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "cpu"
+    )
+
+    print(f"Using device: {device}")
+
+    # --------------------------------------------------------------
+    # Environment
+    # --------------------------------------------------------------
+
+    env = TurtleBotEnv(
+        max_episode_steps=cfg["max_steps"],
+    )
+
     state_dim = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
+    # Verify that configuration agrees with the environment contract.
+    if state_dim != cfg["state_dim"]:
+        env.close()
+        raise ValueError(
+            f"State dimension mismatch: "
+            f"environment={state_dim}, "
+            f"config={cfg['state_dim']}"
+        )
+
+    if n_actions != cfg["n_actions"]:
+        env.close()
+        raise ValueError(
+            f"Action count mismatch: "
+            f"environment={n_actions}, "
+            f"config={cfg['n_actions']}"
+        )
+
+    print(f"State dimension: {state_dim}")
+    print(f"Number of actions: {n_actions}")
+
+    # --------------------------------------------------------------
+    # DQN agent
+    # --------------------------------------------------------------
+
     agent = DQNAgent(
-        state_dim, n_actions,
-        gamma=cfg["gamma"], lr=cfg["lr"],
-        buffer_size=cfg["buffer_size"], batch_size=cfg["batch_size"],
-        target_update_every=cfg["target_update_every"], device=device,
+        state_dim=state_dim,
+        n_actions=n_actions,
+        gamma=cfg["gamma"],
+        lr=cfg["lr"],
+        buffer_size=cfg["buffer_size"],
+        batch_size=cfg["batch_size"],
+        target_update_every=cfg["target_update_every"],
+        device=device,
     )
 
-    writer = SummaryWriter(f"runs/dqn_{args.env}")
+    # --------------------------------------------------------------
+    # Logging / checkpoints
+    # --------------------------------------------------------------
+
+    writer = SummaryWriter(
+        log_dir="runs/dqn_turtlebot"
+    )
+
     os.makedirs("checkpoints", exist_ok=True)
+
+    # --------------------------------------------------------------
+    # Training state
+    # --------------------------------------------------------------
 
     epsilon = cfg["eps_start"]
     total_steps = 0
 
-    for episode in range(1, cfg["max_episodes"] + 1):
-        state, _ = env.reset()
-        done = False
-        ep_reward, ep_len, collided = 0.0, 0, False
+    try:
+        # ----------------------------------------------------------
+        # Episodes
+        # ----------------------------------------------------------
 
-        while not done:
-            # act randomly until the buffer has warmed up, then epsilon-greedy
-            if total_steps < cfg["learning_starts"]:
-                action = env.action_space.sample()
-            else:
-                action = agent.select_action(state, epsilon)
+        for episode in range(
+            1,
+            cfg["max_episodes"] + 1,
+        ):
+            state, _ = env.reset()
 
-            next_state, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
+            done = False
+            episode_reward = 0.0
+            episode_length = 0
+            collided = False
+            episode_losses = []
 
-            # store `terminated` (a real crash), NOT `truncated` (a timeout) as the done flag
-            agent.buffer.add(state, action, reward, next_state, float(terminated))
-            if total_steps >= cfg["learning_starts"]:
-                agent.learn()
+            # ------------------------------------------------------
+            # Episode loop
+            # ------------------------------------------------------
 
-            state = next_state
-            ep_reward += reward
-            ep_len += 1
-            total_steps += 1
-            if info.get("collision"):
-                collided = True
+            while not done:
 
-        # shrink exploration each episode
-        epsilon = max(cfg["eps_end"], epsilon * cfg["eps_decay"])
+                # Initial experience collection.
+                if total_steps < cfg["learning_starts"]:
+                    action = env.action_space.sample()
 
-        # ---- logging (TensorBoard + console) ----
-        writer.add_scalar("reward/episode", ep_reward, episode)
-        writer.add_scalar("survival_steps", ep_len, episode)   # survival time
-        writer.add_scalar("collision", int(collided), episode)
-        writer.add_scalar("epsilon", epsilon, episode)
-        print(f"ep {episode:4d} | reward {ep_reward:8.1f} | survived {ep_len:4d} steps | "
-              f"collided {int(collided)} | eps {epsilon:.2f}")
+                else:
+                    action = agent.select_action(
+                        state,
+                        epsilon,
+                    )
 
-        if episode % cfg["save_every"] == 0:
-            agent.save(f"checkpoints/dqn_{args.env}_{episode}.pt")
+                (
+                    next_state,
+                    reward,
+                    terminated,
+                    truncated,
+                    info,
+                ) = env.step(action)
 
-    agent.save(f"checkpoints/dqn_{args.env}_final.pt")
-    env.close()
-    writer.close()
+                done = terminated or truncated
+
+                # Store the REAL terminal condition.
+                #
+                # Collision = terminated
+                # Timeout   = truncated
+                #
+                # We intentionally store only terminated here.
+                agent.buffer.add(
+                    state,
+                    action,
+                    reward,
+                    next_state,
+                    float(terminated),
+                )
+
+                # Begin learning after the warm-up period.
+                if total_steps >= cfg["learning_starts"]:
+                    loss = agent.learn()
+
+                    if loss is not None:
+                        episode_losses.append(loss)
+
+                state = next_state
+
+                episode_reward += reward
+                episode_length += 1
+                total_steps += 1
+
+                if info.get("collision", False):
+                    collided = True
+
+            # ------------------------------------------------------
+            # Exploration decay
+            # ------------------------------------------------------
+
+            epsilon = max(
+                cfg["eps_end"],
+                epsilon * cfg["eps_decay"],
+            )
+
+            # ------------------------------------------------------
+            # Logging
+            # ------------------------------------------------------
+
+            writer.add_scalar(
+                "reward/episode",
+                episode_reward,
+                episode,
+            )
+
+            writer.add_scalar(
+                "survival_steps",
+                episode_length,
+                episode,
+            )
+
+            writer.add_scalar(
+                "collision",
+                int(collided),
+                episode,
+            )
+
+            writer.add_scalar(
+                "epsilon",
+                epsilon,
+                episode,
+            )
+
+            if episode_losses:
+                writer.add_scalar(
+                    "loss/episode",
+                    sum(episode_losses)
+                    / len(episode_losses),
+                    episode,
+                )
+
+            print(
+                f"ep {episode:4d} | "
+                f"reward {episode_reward:8.2f} | "
+                f"survived {episode_length:4d} steps | "
+                f"collided {int(collided)} | "
+                f"eps {epsilon:.3f}"
+            )
+
+            # ------------------------------------------------------
+            # Periodic checkpoint
+            # ------------------------------------------------------
+
+            if episode % cfg["save_every"] == 0:
+                checkpoint_path = (
+                    f"checkpoints/"
+                    f"dqn_turtlebot_{episode}.pt"
+                )
+
+                agent.save(checkpoint_path)
+
+                print(
+                    f"Saved checkpoint: "
+                    f"{checkpoint_path}"
+                )
+
+        # ----------------------------------------------------------
+        # Final checkpoint
+        # ----------------------------------------------------------
+
+        final_checkpoint = (
+            "checkpoints/dqn_turtlebot_final.pt"
+        )
+
+        agent.save(final_checkpoint)
+
+        print(
+            f"\nTraining complete.\n"
+            f"Final checkpoint: {final_checkpoint}"
+        )
+
+    except KeyboardInterrupt:
+        print("\nTraining interrupted by user.")
+
+        interrupted_checkpoint = (
+            "checkpoints/dqn_turtlebot_interrupted.pt"
+        )
+
+        agent.save(interrupted_checkpoint)
+
+        print(
+            f"Saved interrupted checkpoint: "
+            f"{interrupted_checkpoint}"
+        )
+
+    finally:
+        env.close()
+        writer.close()
 
 
 if __name__ == "__main__":
     main()
+

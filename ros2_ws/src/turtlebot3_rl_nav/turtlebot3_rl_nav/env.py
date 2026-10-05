@@ -75,7 +75,7 @@ class TurtleBotEnv(gym.Env):
     # Initialization
     # ==================================================================
 
-    def __init__(self) -> None:
+    def __init__(self, max_episode_steps: int | None = None) -> None:
         super().__init__()
 
         # 24 normalized LiDAR values.
@@ -92,6 +92,15 @@ class TurtleBotEnv(gym.Env):
         self.ros = ROSInterfaceRunner()
 
         self.current_step = 0
+        if max_episode_steps is None:
+            self.max_episode_steps = self.MAX_EPISODE_STEPS
+        else:
+            if max_episode_steps <= 0:
+                raise ValueError(
+                    "max_episode_steps must be greater than zero."
+                )
+
+        self.max_episode_steps = int(max_episode_steps)
 
     # ==================================================================
     # Gymnasium reset
@@ -243,7 +252,7 @@ class TurtleBotEnv(gym.Env):
         terminated = collision
 
         truncated = (
-            self.current_step >= self.MAX_EPISODE_STEPS
+            self.current_step >= self.max_episode_steps
             and not terminated
         )
 
