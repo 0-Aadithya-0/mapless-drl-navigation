@@ -1,5 +1,7 @@
 import os
+import sys
 
+from ament_index_python.packages import get_package_prefix
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
@@ -9,6 +11,11 @@ from launch.actions import OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+
+# sim_guard.py sits next to this file; realpath follows the
+# --symlink-install link back to it.
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+from sim_guard import prepend_path, refuse_if_gazebo_running  # noqa: E402
 
 
 def generate_training_launch(context, *args, **kwargs):
@@ -30,23 +37,41 @@ def generate_training_launch(context, *args, **kwargs):
         f"training_stage{stage}.world",
     )
 
-    models_path = os.path.join(pkg_share, "models")
-
-    existing_resource_path = os.environ.get(
+    prepend_path(
         "GZ_SIM_RESOURCE_PATH",
-        "",
+        os.path.join(pkg_share, "models"),
     )
 
-    if existing_resource_path:
-        os.environ["GZ_SIM_RESOURCE_PATH"] = (
-            models_path + os.pathsep + existing_resource_path
-        )
-    else:
-        os.environ["GZ_SIM_RESOURCE_PATH"] = models_path
+    # The stage 3/4 obstacle-motion systems (libobstacles.so and
+    # friends) ship in lib/turtlebot3_gazebo, which Gazebo does not
+    # search by default. Without this they fail to load and the
+    # "moving" obstacles stay put.
+    prepend_path(
+        "GZ_SIM_SYSTEM_PLUGIN_PATH",
+        os.path.join(
+            get_package_prefix("turtlebot3_gazebo"),
+            "lib",
+            "turtlebot3_gazebo",
+        ),
+    )
 
     x_pose = LaunchConfiguration("x_pose")
     y_pose = LaunchConfiguration("y_pose")
     use_sim_time = LaunchConfiguration("use_sim_time")
+
+    gui = LaunchConfiguration("gui").perform(context).lower()
+
+    if gui not in {"true", "false"}:
+        raise RuntimeError(
+            f"Invalid gui value '{gui}'. Expected true or false."
+        )
+
+    # Without the GUI, run the server only and render the GPU LiDAR
+    # offscreen. This frees the CPU/GPU the GUI uses so the
+    # simulation can run faster than real time.
+    gz_mode_args = "" if gui == "true" else "-s --headless-rendering "
+
+    refuse_if_gazebo_running()
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -57,7 +82,7 @@ def generate_training_launch(context, *args, **kwargs):
             )
         ),
         launch_arguments={
-            "gz_args": f"-r -v1 {world_file}",
+            "gz_args": f"-r {gz_mode_args}-v1 {world_file}",
             "on_exit_shutdown": "true",
         }.items(),
     )
@@ -130,6 +155,11 @@ def generate_launch_description():
                 "use_sim_time",
                 default_value="true",
                 description="Use Gazebo simulation time",
+            ),
+            DeclareLaunchArgument(
+                "gui",
+                default_value="true",
+                description="Show the Gazebo GUI (false = headless server)",
             ),
             OpaqueFunction(
                 function=generate_training_launch,

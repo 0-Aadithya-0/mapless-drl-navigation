@@ -21,9 +21,11 @@
     
     <gravity>0 0 -9.8</gravity>
     <physics default="0" name="default_physics" type="ode">
-      <max_step_size>0.001</max_step_size>
+      <!-- Same 5 ms step as the training worlds, so evaluation runs
+           the physics the policy trained on; 1x for viewing. -->
+      <max_step_size>0.005</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_update_rate>200</real_time_update_rate>
     </physics>
 
     
@@ -113,11 +115,16 @@
         <pose frame="">-0.061684 -6.6493 0 0 0 0</pose>
 	</model-->
 
+        <!-- The floor's collision box is 0.124318 m tall, so this offset
+             puts its top surface at z = 0, where the robot spawns and
+             env.reset() teleports it (z = 0.01). At the old -0.090092
+             the surface sat at z = 0.034 and the wheels started inside
+             the floor, leaving the robot stuck with its wheels spinning. -->
         <model name="aws_robomaker_warehouse_GroundB_01_001">
         <include>
             <uri>model://aws_robomaker_warehouse_GroundB_01</uri>
         </include>
-        <pose frame="">0.0 0.0 -0.090092 0 0 0</pose>
+        <pose frame="">0.0 0.0 -0.124318 0 0 0</pose>
 	</model>
        
         <!--model name="aws_robomaker_warehouse_Lamp_01_005">

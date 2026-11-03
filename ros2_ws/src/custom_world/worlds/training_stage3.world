@@ -25,9 +25,13 @@
     </plugin>
 
     <physics type="ode">
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <max_step_size>0.001</max_step_size>
-      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>600.0</real_time_update_rate>
+      <!-- 5 ms steps (the IMU runs at 200 Hz, so this is the max) let
+           training run faster than real time; the RL env times steps
+           by sensor stamps. Above ~3x, sensor/agent latency starts
+           stretching steps past CONTROL_DT (watch the dt column). -->
+      <max_step_size>0.005</max_step_size>
+      <real_time_factor>3</real_time_factor>
       <ode>
         <solver>
           <type>quick</type>

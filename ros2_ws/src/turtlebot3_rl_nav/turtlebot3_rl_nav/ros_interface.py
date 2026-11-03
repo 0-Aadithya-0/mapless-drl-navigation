@@ -10,9 +10,15 @@ from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.signals import SignalHandlerOptions
 from ros_gz_interfaces.msg import Entity
 from ros_gz_interfaces.srv import SetEntityPose
 from sensor_msgs.msg import LaserScan
+
+
+def stamp_to_ns(stamp) -> int:
+    """Convert a builtin_interfaces/Time stamp to integer nanoseconds."""
+    return stamp.sec * 1_000_000_000 + stamp.nanosec
 
 
 class ROSInterface(Node):
@@ -20,10 +26,10 @@ class ROSInterface(Node):
     Low-level ROS 2 interface for the TurtleBot3.
 
     Responsibilities:
-        - Subscribe to /scan
-        - Subscribe to /odom
-        - Publish TwistStamped commands to /cmd_vel
-        - Reset the robot pose through Gazebo
+    - Subscribe to /scan
+    - Subscribe to /odom
+    - Publish TwistStamped commands to /cmd_vel
+    - Reset the robot pose through Gazebo
 
     This class contains no Gymnasium or RL logic.
     """
@@ -42,8 +48,9 @@ class ROSInterface(Node):
         self.latest_scan: Optional[LaserScan] = None
         self.latest_odom: Optional[Odometry] = None
 
-        self._scan_lock = threading.Lock()
-        self._odom_lock = threading.Lock()
+        # Shared by both sensor callbacks so waiters are woken on
+        # every new message.
+        self._sensor_cv = threading.Condition()
 
         # --------------------------------------------------------------
         # ROS subscriptions
@@ -91,14 +98,16 @@ class ROSInterface(Node):
     # ==================================================================
 
     def _scan_callback(self, msg: LaserScan) -> None:
-        """Store the newest LiDAR message."""
-        with self._scan_lock:
+        """Store the newest LiDAR message and wake any waiters."""
+        with self._sensor_cv:
             self.latest_scan = msg
+            self._sensor_cv.notify_all()
 
     def _odom_callback(self, msg: Odometry) -> None:
-        """Store the newest odometry message."""
-        with self._odom_lock:
+        """Store the newest odometry message and wake any waiters."""
+        with self._sensor_cv:
             self.latest_odom = msg
+            self._sensor_cv.notify_all()
 
     # ==================================================================
     # Sensor access
@@ -106,13 +115,71 @@ class ROSInterface(Node):
 
     def get_latest_scan(self) -> Optional[LaserScan]:
         """Return the most recently received LiDAR message."""
-        with self._scan_lock:
+        with self._sensor_cv:
             return self.latest_scan
 
     def get_latest_odom(self) -> Optional[Odometry]:
         """Return the most recently received odometry message."""
-        with self._odom_lock:
+        with self._sensor_cv:
             return self.latest_odom
+
+    def latest_odom_stamp_ns(self) -> int:
+        """
+        Return the newest odometry stamp in nanoseconds of sim time.
+
+        Odometry arrives at 30 Hz, so this is a close lower bound on
+        the current simulation time. Returns 0 before any odometry.
+        """
+        with self._sensor_cv:
+            if self.latest_odom is None:
+                return 0
+
+            return stamp_to_ns(self.latest_odom.header.stamp)
+
+    def wait_for_sensor_data(
+        self,
+        min_stamp_ns: int,
+        timeout: float,
+    ) -> tuple[LaserScan, Odometry]:
+        """
+        Block until both /scan and /odom have a message stamped at or
+        after min_stamp_ns, then return that pair.
+
+        Args:
+            min_stamp_ns: Earliest acceptable header stamp (sim time).
+            timeout: Wall-clock seconds before giving up.
+        """
+
+        def is_fresh() -> bool:
+            return (
+                self.latest_scan is not None
+                and self.latest_odom is not None
+                and stamp_to_ns(self.latest_scan.header.stamp)
+                >= min_stamp_ns
+                and stamp_to_ns(self.latest_odom.header.stamp)
+                >= min_stamp_ns
+            )
+
+        with self._sensor_cv:
+            if not self._sensor_cv.wait_for(is_fresh, timeout=timeout):
+                scan_ns = (
+                    stamp_to_ns(self.latest_scan.header.stamp)
+                    if self.latest_scan is not None
+                    else None
+                )
+                odom_ns = (
+                    stamp_to_ns(self.latest_odom.header.stamp)
+                    if self.latest_odom is not None
+                    else None
+                )
+
+                raise TimeoutError(
+                    f"Timed out after {timeout:.1f} s waiting for "
+                    f"/scan and /odom stamped >= {min_stamp_ns} ns. "
+                    f"Latest /scan: {scan_ns}, latest /odom: {odom_ns}."
+                )
+
+            return self.latest_scan, self.latest_odom
 
     # ==================================================================
     # Velocity control
@@ -145,7 +212,10 @@ class ROSInterface(Node):
         self.cmd_vel_publisher.publish(msg)
 
     def stop_robot(self) -> None:
-        """Publish a zero-velocity command."""
+        """Publish a zero-velocity command if ROS is still running."""
+        if not self.context.ok():
+            return
+
         self.publish_velocity(0.0, 0.0)
 
     # ==================================================================
@@ -217,14 +287,6 @@ class ROSInterface(Node):
                 f"'{self.ROBOT_NAME}'."
             )
 
-
-    def clear_sensor_data(self) -> None:
-        """Clear cached sensor messages so the next reads are fresh."""
-        with self._scan_lock:
-            self.latest_scan = None
-
-        with self._odom_lock:
-            self.latest_odom = None
     # ==================================================================
     # Lifecycle
     # ==================================================================
@@ -245,7 +307,9 @@ class ROSInterfaceRunner:
 
     def __init__(self) -> None:
         if not rclpy.ok():
-            rclpy.init()
+            # Leave Ctrl-C to Python so the training script can save a
+            # checkpoint and stop the robot before ROS shuts down.
+            rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
 
         self.node = ROSInterface()
 
@@ -285,14 +349,12 @@ class ROSInterfaceRunner:
         if self._thread.is_alive():
             self._thread.join(timeout=1.0)
 
-        self.node.destroy_node()
+        # Destroying the node while the spin thread still runs (an
+        # overloaded system can outlast the join) raises InvalidHandle in
+        # that thread and buries the real error. The process is exiting
+        # either way, so leave the node to it.
+        if not self._thread.is_alive():
+            self.node.destroy_node()
+
         if rclpy.ok():
             rclpy.shutdown()
-
-        
-
-    
-
-    def clear_sensor_data(self) -> None:
-        """Clear cached sensor messages."""
-        self.node.clear_sensor_data()

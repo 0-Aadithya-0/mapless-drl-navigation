@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import time
+import math
 from typing import Any
 
 import gymnasium as gym
@@ -10,9 +10,10 @@ from gymnasium import spaces
 from .lidar_processing import (
     LIDAR_MAX_RANGE,
     NUM_BEAMS,
+    clean_ranges,
     process_lidar_scan,
 )
-from .ros_interface import ROSInterfaceRunner
+from .ros_interface import ROSInterfaceRunner, stamp_to_ns
 
 
 class TurtleBotEnv(gym.Env):
@@ -21,20 +22,24 @@ class TurtleBotEnv(gym.Env):
 
     Week 2 DQN environment:
 
-        Observation:
-            24 normalized LiDAR beams in [0, 1]
+    Observation:
+        24 normalized LiDAR sector minima in [0, 1], sector 0 ahead
 
-        Actions:
-            0 = forward
-            1 = left
-            2 = right
-            3 = stop
+    Actions:
+        0 = forward
+        1 = left
+        2 = right
+        3 = stop
 
-        Termination:
-            collision
+    Reward:
+        forward progress in meters - STEP_COST each step,
+        plus COLLISION_REWARD on collision
 
-        Truncation:
-            maximum episode length
+    Termination:
+        collision
+
+    Truncation:
+        maximum episode length
 
     ROS communication is handled entirely by ROSInterfaceRunner.
     """
@@ -56,10 +61,36 @@ class TurtleBotEnv(gym.Env):
     # Environment configuration
     # ==================================================================
 
+    # Steps are this far apart in simulation time, measured by sensor
+    # header stamps. Matches the 5 Hz LiDAR period.
     CONTROL_DT = 0.20
+
+    # The command is published after the previous scan arrives, which
+    # is 30-45 ms of sim time after its stamp at 3x real time
+    # (rendering + bridge), plus agent compute. Allow this much slack
+    # so the next scan on the 5 Hz grid still counts. Too little slack
+    # makes steps wait two scan periods.
+    #
+    # The sim runs freely, so the previous action stays applied until
+    # this command reaches Gazebo: each scan-to-scan window starts
+    # with that latency under the old action. Only lock-step stepping
+    # (pause, then advance exactly CONTROL_DT) removes the overlap.
+    STAMP_TOLERANCE = 0.10
+
+    # After a teleport, only sensor data stamped this long after the
+    # reset reference is accepted.
+    RESET_SETTLE_TIME = 0.10
 
     COLLISION_DISTANCE = 0.18
     COLLISION_REWARD = -10.0
+
+    # Charged every step. Without it, stopping or spinning in place
+    # earns 0 forever and never risks the collision penalty, so idling
+    # is a safe local optimum. Idling forever now costs
+    # STEP_COST / (1 - gamma) = 1.0 at gamma 0.99: worse than driving,
+    # but far less than a collision, so crashing to end an episode
+    # never pays.
+    STEP_COST = 0.01
 
     MAX_EPISODE_STEPS = 500
 
@@ -69,13 +100,17 @@ class TurtleBotEnv(gym.Env):
     START_YAW = 0.0
     START_Z = 0.01
 
-    SENSOR_TIMEOUT = 2.0
+    # Wall-clock stall detector only; step timing uses sim stamps.
+    SENSOR_TIMEOUT = 10.0
 
     # ==================================================================
     # Initialization
     # ==================================================================
 
-    def __init__(self, max_episode_steps: int | None = None) -> None:
+    def __init__(
+        self,
+        max_episode_steps: int | None = None,
+    ) -> None:
         super().__init__()
 
         # 24 normalized LiDAR values.
@@ -92,15 +127,23 @@ class TurtleBotEnv(gym.Env):
         self.ros = ROSInterfaceRunner()
 
         self.current_step = 0
+
+        # Odometry and scan stamp from the previous observation, used
+        # for the displacement reward and step-duration reporting.
+        self._prev_odom = None
+        self._prev_scan_stamp_ns = 0
+
         if max_episode_steps is None:
             self.max_episode_steps = self.MAX_EPISODE_STEPS
         else:
-            if max_episode_steps <= 0:
+            steps = int(max_episode_steps)
+
+            if steps <= 0 or steps != max_episode_steps:
                 raise ValueError(
-                    "max_episode_steps must be greater than zero."
+                    "max_episode_steps must be a positive integer."
                 )
 
-        self.max_episode_steps = int(max_episode_steps)
+            self.max_episode_steps = steps
 
     # ==================================================================
     # Gymnasium reset
@@ -123,9 +166,6 @@ class TurtleBotEnv(gym.Env):
         # the previous episode.
         self.ros.node.stop_robot()
 
-        # Discard old sensor data.
-        self.ros.clear_sensor_data()
-
         # Teleport Burger to the starting pose.
         self.ros.reset_robot_pose(
             x=self.START_X,
@@ -138,15 +178,18 @@ class TurtleBotEnv(gym.Env):
         # Stop again after teleportation.
         self.ros.node.stop_robot()
 
-        # Wait for new /scan and /odom messages.
-        self._wait_for_sensor_data()
+        # Only accept frames rendered after the teleport. Messages
+        # already in flight from the old pose carry earlier stamps.
+        reset_stamp_ns = self.ros.node.latest_odom_stamp_ns()
 
-        scan = self.ros.node.get_latest_scan()
+        scan, odom = self.ros.node.wait_for_sensor_data(
+            min_stamp_ns=reset_stamp_ns
+            + self._seconds_to_ns(self.RESET_SETTLE_TIME),
+            timeout=self.SENSOR_TIMEOUT,
+        )
 
-        if scan is None:
-            raise RuntimeError(
-                "No LiDAR data received after environment reset."
-            )
+        self._prev_odom = odom
+        self._prev_scan_stamp_ns = stamp_to_ns(scan.header.stamp)
 
         observation = process_lidar_scan(scan)
 
@@ -155,7 +198,9 @@ class TurtleBotEnv(gym.Env):
         info = {
             "step": 0,
             "collision": False,
-            "min_lidar_distance": self._minimum_lidar_distance(scan),
+            "min_lidar_distance": self._minimum_lidar_distance(
+                scan
+            ),
         }
 
         return observation, info
@@ -182,34 +227,36 @@ class TurtleBotEnv(gym.Env):
 
         linear_velocity, angular_velocity = self.ACTIONS[action]
 
-        # We want the sensor data produced by this action,
-        # not a previously cached message.
-        self.ros.clear_sensor_data()
+        # Sim-time reference for when the command is issued.
+        command_stamp_ns = self.ros.node.latest_odom_stamp_ns()
 
-        # Send action to the robot.
+        # Send the action to the robot.
         self.ros.node.publish_velocity(
             linear_x=linear_velocity,
             angular_z=angular_velocity,
         )
 
-        # Hold the action for the control interval.
-        time.sleep(self.CONTROL_DT)
-
-        # Make sure fresh data has arrived.
-        self._wait_for_sensor_data()
-
-        scan = self.ros.node.get_latest_scan()
-        odom = self.ros.node.get_latest_odom()
-
-        if scan is None:
-            raise RuntimeError(
-                "No LiDAR data received during environment step."
+        # Wait for the next scan on the CONTROL_DT grid: sensor data
+        # stamped at least CONTROL_DT - STAMP_TOLERANCE after the
+        # command was issued.
+        try:
+            scan, odom = self.ros.node.wait_for_sensor_data(
+                min_stamp_ns=command_stamp_ns
+                + self._seconds_to_ns(
+                    self.CONTROL_DT - self.STAMP_TOLERANCE
+                ),
+                timeout=self.SENSOR_TIMEOUT,
             )
+        except BaseException:
+            # Never leave the robot driving on a stalled sensor.
+            self.ros.node.stop_robot()
+            raise
 
-        if odom is None:
-            raise RuntimeError(
-                "No odometry data received during environment step."
-            )
+        scan_stamp_ns = stamp_to_ns(scan.header.stamp)
+
+        step_duration = (
+            scan_stamp_ns - self._prev_scan_stamp_ns
+        ) / 1e9
 
         # --------------------------------------------------------------
         # Observation
@@ -237,8 +284,13 @@ class TurtleBotEnv(gym.Env):
             odom.twist.twist.linear.x
         )
 
-        # Forward displacement during this control interval.
-        reward = forward_velocity * self.CONTROL_DT
+        # Forward displacement over the step, minus the cost of the
+        # time spent: a step that makes no progress loses reward.
+        progress = self._forward_progress(self._prev_odom, odom)
+        reward = progress - self.STEP_COST
+
+        self._prev_odom = odom
+        self._prev_scan_stamp_ns = scan_stamp_ns
 
         if collision:
             reward += self.COLLISION_REWARD
@@ -265,6 +317,8 @@ class TurtleBotEnv(gym.Env):
             "collision": collision,
             "min_lidar_distance": min_distance,
             "linear_velocity": forward_velocity,
+            "step_duration": step_duration,
+            "progress": progress,
         }
 
         return (
@@ -276,34 +330,36 @@ class TurtleBotEnv(gym.Env):
         )
 
     # ==================================================================
-    # Sensor synchronization
+    # Timing and odometry helpers
     # ==================================================================
 
-    def _wait_for_sensor_data(
-        self,
-        timeout: float | None = None,
-    ) -> None:
+    @staticmethod
+    def _seconds_to_ns(seconds: float) -> int:
+        """Convert seconds to integer nanoseconds."""
+        return int(round(seconds * 1e9))
+
+    @staticmethod
+    def _forward_progress(
+        start: Any,
+        end: Any,
+    ) -> float:
         """
-        Wait until both LiDAR and odometry data are available.
+        Return the displacement from start to end odometry, projected
+        onto the robot's heading at start, in meters.
         """
 
-        if timeout is None:
-            timeout = self.SENSOR_TIMEOUT
+        p0 = start.pose.pose.position
+        p1 = end.pose.pose.position
+        q = start.pose.pose.orientation
 
-        start_time = time.monotonic()
+        yaw = math.atan2(
+            2.0 * (q.w * q.z + q.x * q.y),
+            1.0 - 2.0 * (q.y * q.y + q.z * q.z),
+        )
 
-        while time.monotonic() - start_time < timeout:
-
-            scan = self.ros.node.get_latest_scan()
-            odom = self.ros.node.get_latest_odom()
-
-            if scan is not None and odom is not None:
-                return
-
-            time.sleep(0.01)
-
-        raise TimeoutError(
-            "Timed out waiting for /scan and /odom data."
+        return (
+            (p1.x - p0.x) * math.cos(yaw)
+            + (p1.y - p0.y) * math.sin(yaw)
         )
 
     # ==================================================================
@@ -318,22 +374,15 @@ class TurtleBotEnv(gym.Env):
         Return the minimum valid LiDAR distance in meters.
         """
 
-        ranges = np.asarray(
-            scan.ranges,
-            dtype=np.float32,
-        )
+        # Same invalid-reading rules as the observation, so a reading
+        # inside the minimum range always counts as a collision.
+        ranges = clean_ranges(scan)
 
         if ranges.size == 0:
             return LIDAR_MAX_RANGE
 
-        # No-return values are not collisions.
-        ranges = np.nan_to_num(
-            ranges,
-            nan=LIDAR_MAX_RANGE,
-            posinf=LIDAR_MAX_RANGE,
-            neginf=LIDAR_MAX_RANGE,
-        )
-
+        # Lower bound 0, not the minimum range: a real reading below
+        # it is still the closest obstacle.
         ranges = np.clip(
             ranges,
             0.0,

@@ -1,27 +1,28 @@
 import os
+import sys
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+# sim_guard.py sits next to this file; realpath follows the
+# --symlink-install link back to it.
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+from sim_guard import prepend_path, refuse_if_gazebo_running  # noqa: E402
 
 
 def generate_launch_description():
     os.environ.setdefault('TURTLEBOT3_MODEL', 'burger')
 
+    refuse_if_gazebo_running()
+
     pkg_share = get_package_share_directory('custom_world')
     world_file = os.path.join(pkg_share, 'worlds', 'showcase.world')
 
     # Gazebo Harmonic searches GZ_SIM_RESOURCE_PATH for model:// resources.
-    models_path = os.path.join(pkg_share, 'models')
-    existing_resource_path = os.environ.get('GZ_SIM_RESOURCE_PATH', '')
-
-    if existing_resource_path:
-        os.environ['GZ_SIM_RESOURCE_PATH'] = (
-            models_path + os.pathsep + existing_resource_path
-        )
-    else:
-        os.environ['GZ_SIM_RESOURCE_PATH'] = models_path
+    prepend_path('GZ_SIM_RESOURCE_PATH', os.path.join(pkg_share, 'models'))
 
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
@@ -81,10 +82,22 @@ def generate_launch_description():
         }.items(),
     )
 
+    # 5. Pose-reset service used by the RL environment's reset()
+    set_pose_bridge_cmd = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=[
+            '/world/default/set_pose'
+            '@ros_gz_interfaces/srv/SetEntityPose'
+        ],
+        output='screen',
+    )
+
     ld = LaunchDescription()
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(spawn_turtlebot_cmd)
+    ld.add_action(set_pose_bridge_cmd)
 
     return ld

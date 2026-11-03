@@ -2,6 +2,8 @@
 
 LiDAR-based mapless goal-reaching navigation for a TurtleBot3, learned end-to-end with deep reinforcement learning. The robot navigates to a goal in an unknown environment without a map or a path planner, using only its laser scan and the goal's relative position. The control policy is trained from scratch (DQN, then TD3) in ROS 2 and Gazebo.
 
+> **Current status (Week 2):** DQN obstacle avoidance only. The state is 24 LiDAR sector minima with no goal input, and the reward is forward progress minus a per-step cost and a collision penalty. Goal-reaching, the 26-element state and TD3 below are planned, not yet built.
+
 ---
 
 ## Table of Contents
@@ -109,9 +111,9 @@ The fixed agreement between the reinforcement learning and robotics components. 
 
 | Layer | Tools |
 |-------|-------|
-| Robotics middleware | ROS 2 Humble |
-| Simulation | Gazebo Classic, TurtleBot3 (Burger) |
-| Learning | Python 3.10, PyTorch, Gymnasium |
+| Robotics middleware | ROS 2 Jazzy |
+| Simulation | Gazebo Harmonic, TurtleBot3 (Burger) |
+| Learning | Python 3.12, PyTorch, Gymnasium |
 | Logging and analysis | TensorBoard, NumPy |
 | Sensors | 2D LiDAR (`sensor_msgs/LaserScan`), wheel odometry (`nav_msgs/Odometry`) |
 
@@ -123,11 +125,12 @@ The fixed agreement between the reinforcement learning and robotics components. 
 mapless-drl-navigation/
 ├── docs/                      # knowledge document, interface contract, diagram
 ├── rl/                        # pure-Python reinforcement learning (no ROS); runs in a venv
-│   ├── agents/                # dqn.py, td3.py, networks.py, replay_buffer.py
-│   ├── configs/               # dqn.yaml, td3.yaml (hyperparameters)
-│   ├── utils/                 # seeding, config loading, action scaling
-│   ├── train.py               # unified entry point: --algo {dqn,td3} --env {cartpole,pendulum,turtlebot}
-│   └── evaluate.py            # produces the DQN-versus-TD3 metrics table
+│   ├── agents/                # dqn.py, networks.py, replay_buffer.py (td3.py planned)
+│   ├── configs/               # dqn.yaml (hyperparameters)
+│   ├── utils/                 # seeding, config loading
+│   ├── train.py               # DQN training on the TurtleBot3 environment
+│   └── evaluate.py            # greedy evaluation; ranks checkpoints best first
+├── tests/                     # pytest unit tests (LiDAR processing, replay buffer)
 └── ros2_ws/src/turtlebot3_rl_nav/   # ament_python ROS 2 package
     ├── turtlebot3_rl_nav/
     │   ├── env.py             # Gymnasium environment bridging ROS/Gazebo and RL
@@ -164,7 +167,7 @@ git clone https://github.com/<your-username>/mapless-drl-navigation.git
 cd mapless-drl-navigation
 
 # 2. Create the ROS-compatible Python environment
-python3.10 -m venv --system-site-packages .venv
+python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
@@ -179,22 +182,15 @@ cd ..
 
 ## Usage
 
-Validate the algorithms on benchmark environments first; these require no ROS installation.
-
-```bash
-python -m rl.train --algo dqn --env cartpole      # DQN validation
-python -m rl.train --algo td3 --env pendulum      # TD3 validation
-```
-
 Train on the robot using two terminals — one to launch the simulation and one to run training.
 
 ```bash
-# Terminal A
-ros2 launch turtlebot3_rl_nav training.launch.py
+# Terminal A (gui:=false runs Gazebo headless)
+ros2 launch custom_world training.launch.py stage:=2 gui:=false
 
 # Terminal B
-python -m rl.train --algo dqn --env turtlebot     # DQN obstacle avoidance
-python -m rl.train --algo td3 --env turtlebot     # TD3 goal-reaching
+python -m rl.train                                # DQN obstacle avoidance
+python -m rl.train --resume checkpoints/dqn_turtlebot_100.pt
 ```
 
 Monitor training:
@@ -203,10 +199,17 @@ Monitor training:
 tensorboard --logdir runs/
 ```
 
-Evaluate a trained policy and generate the comparison metrics:
+Evaluate the saved checkpoints in a test world. The summary table is ranked by average distance, then reward, and its first row is the best checkpoint:
 
 ```bash
-python -m rl.evaluate --algo td3 --env turtlebot --ckpt checkpoints/td3_turtlebot_final.pt --episodes 100
+ros2 launch custom_world training.launch.py stage:=3 gui:=false
+python -m rl.evaluate --world stage3 --checkpoint checkpoints/dqn_turtlebot_[0-9]*.pt
+```
+
+Run the unit tests (with ROS and `ros2_ws/install/setup.bash` sourced):
+
+```bash
+python -m pytest tests
 ```
 
 ---

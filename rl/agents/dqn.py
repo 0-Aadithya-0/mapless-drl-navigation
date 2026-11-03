@@ -4,6 +4,7 @@ Identical in structure to the CartPole version you built and understand. The onl
 differences for the robot are the numbers you pass in (state_dim=24, n_actions=4),
 which come from the config file.
 """
+import os
 import random
 import torch
 import torch.nn.functional as F
@@ -16,6 +17,7 @@ class DQNAgent:
     def __init__(self, state_dim, n_actions,
                  gamma=0.99, lr=5e-4, buffer_size=50000,
                  batch_size=64, target_update_every=500, device="cpu"):
+        self.state_dim = state_dim
         self.n_actions = n_actions
         self.gamma = gamma
         self.batch_size = batch_size
@@ -30,6 +32,20 @@ class DQNAgent:
         self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=lr)
         self.buffer    = ReplayBuffer(buffer_size, state_dim)
         self.learn_steps = 0
+
+    def warmup(self):
+        # the first GPU call of each kernel is slow (~0.5 s: lazy kernel
+        # loading, cuBLAS setup) and the sim keeps running meanwhile, so that
+        # step would last seconds; run select_action and learn once on a
+        # throwaway agent first — loaded kernels stay loaded for the process
+        scratch = DQNAgent(self.state_dim, self.n_actions,
+                           buffer_size=self.batch_size,
+                           batch_size=self.batch_size, device=self.device)
+        state = [0.0] * self.state_dim
+        for _ in range(self.batch_size):
+            scratch.buffer.add(state, 0, 0.0, state, 0.0)
+        scratch.select_action(state, epsilon=0.0)
+        scratch.learn()
 
     @torch.no_grad()
     def select_action(self, state, epsilon):
@@ -71,9 +87,33 @@ class DQNAgent:
 
         return loss.item()
 
-    def save(self, path):
-        torch.save(self.q_net.state_dict(), path)
+    def save(self, path, **training_state):
+        # everything that changes during training, so a resume continues
+        # the same run; training_state carries the loop's own counters
+        checkpoint = {
+            "q_net":       self.q_net.state_dict(),
+            "target_net":  self.target_net.state_dict(),
+            "optimizer":   self.optimizer.state_dict(),
+            "learn_steps": self.learn_steps,
+            "buffer":      self.buffer.state_dict(),
+            **training_state,
+        }
+        # write then rename: an interrupted save never leaves a truncated file
+        tmp_path = path + ".tmp"
+        torch.save(checkpoint, tmp_path)
+        os.replace(tmp_path, path)
 
     def load(self, path):
-        self.q_net.load_state_dict(torch.load(path, map_location=self.device))
-        self.target_net.load_state_dict(self.q_net.state_dict())
+        # returns the training_state saved with the checkpoint, or None for
+        # old checkpoints that hold only Q-network weights
+        checkpoint = torch.load(path, map_location="cpu")
+        if "q_net" not in checkpoint:
+            self.q_net.load_state_dict(checkpoint)
+            self.target_net.load_state_dict(self.q_net.state_dict())
+            return None
+        self.q_net.load_state_dict(checkpoint.pop("q_net"))
+        self.target_net.load_state_dict(checkpoint.pop("target_net"))
+        self.optimizer.load_state_dict(checkpoint.pop("optimizer"))
+        self.learn_steps = checkpoint.pop("learn_steps")
+        self.buffer.load_state_dict(checkpoint.pop("buffer"))
+        return checkpoint

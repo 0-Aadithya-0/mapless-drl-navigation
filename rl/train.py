@@ -13,12 +13,25 @@ Training configuration is loaded from:
 The trained checkpoints are saved under:
 
     checkpoints/
+
+Resume from a saved checkpoint:
+
+    python -m rl.train --resume checkpoints/dqn_turtlebot_100.pt
+
+Checkpoints hold the full training state (networks, optimizer, replay
+buffer, episode, epsilon), so a resumed run continues where it stopped.
+Older checkpoints hold only Q-network weights and resume as a warm
+start; their episode number is read from a dqn_turtlebot_<episode>.pt
+filename, or given with --start-episode.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
+import signal
+import time
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -40,7 +53,26 @@ def main() -> None:
         help="Path to the DQN configuration file.",
     )
 
+    parser.add_argument(
+        "--resume",
+        default=None,
+        help="Checkpoint to continue training from.",
+    )
+
+    parser.add_argument(
+        "--start-episode",
+        type=int,
+        default=None,
+        help=(
+            "Episodes already completed by a weight-only --resume "
+            "checkpoint. Defaults to the number in its filename."
+        ),
+    )
+
     args = parser.parse_args()
+
+    if args.start_episode is not None and args.resume is None:
+        parser.error("--start-episode requires --resume.")
 
     # --------------------------------------------------------------
     # Configuration
@@ -59,12 +91,108 @@ def main() -> None:
     print(f"Using device: {device}")
 
     # --------------------------------------------------------------
+    # DQN agent
+    # --------------------------------------------------------------
+
+    # Built from the config so a checkpoint is checked before the
+    # environment starts; the environment contract check below
+    # confirms these shapes.
+    agent = DQNAgent(
+        state_dim=cfg["state_dim"],
+        n_actions=cfg["n_actions"],
+        gamma=cfg["gamma"],
+        lr=cfg["lr"],
+        buffer_size=cfg["buffer_size"],
+        batch_size=cfg["batch_size"],
+        target_update_every=cfg["target_update_every"],
+        device=device,
+    )
+
+    # Load every GPU kernel now, before any step is being timed.
+    agent.warmup()
+
+    # --------------------------------------------------------------
+    # Resume
+    # --------------------------------------------------------------
+
+    start_episode = 0
+    epsilon = cfg["eps_start"]
+    total_steps = 0
+    random_warmup = True
+
+    if args.resume is not None:
+        saved = agent.load(args.resume)
+
+        if saved is not None:
+            # Full checkpoint: continue exactly where it stopped.
+            if args.start_episode is not None:
+                parser.error(
+                    "--start-episode only applies to weight-only "
+                    "checkpoints; this one records its episode."
+                )
+
+            start_episode = saved["episode"]
+            epsilon = saved["epsilon"]
+            total_steps = saved["total_steps"]
+
+        else:
+            # Weight-only checkpoint: warm start.
+            if args.start_episode is not None:
+                start_episode = args.start_episode
+            else:
+                match = re.search(
+                    r"_(\d+)\.pt$",
+                    args.resume,
+                )
+
+                if match is None:
+                    parser.error(
+                        "--start-episode is required when the "
+                        "checkpoint filename has no episode number."
+                    )
+
+                start_episode = int(match.group(1))
+
+            # No saved epsilon, so rebuild it from the current
+            # schedule, which may not be the one these weights
+            # trained under.
+            epsilon = max(
+                cfg["eps_end"],
+                cfg["eps_start"] * cfg["eps_decay"] ** start_episode,
+            )
+
+            # The policy fills the empty replay buffer with
+            # epsilon-greedy actions instead of random ones.
+            random_warmup = False
+
+            print(
+                "Weight-only checkpoint: the optimizer, target "
+                "network and replay buffer start fresh, and epsilon "
+                "follows the current schedule."
+            )
+
+        if start_episode >= cfg["max_episodes"]:
+            parser.error(
+                f"{args.resume} has already completed "
+                f"{start_episode} episodes; raise max_episodes "
+                f"({cfg['max_episodes']}) to train further."
+            )
+
+        print(
+            f"Resumed from {args.resume} "
+            f"after episode {start_episode}"
+        )
+
+    # --------------------------------------------------------------
     # Environment
     # --------------------------------------------------------------
 
     env = TurtleBotEnv(
         max_episode_steps=cfg["max_steps"],
     )
+
+    # Spaces keep their own RNG, which set_seed() does not reach.
+    env.action_space.seed(cfg["seed"])
 
     state_dim = env.observation_space.shape[0]
     n_actions = env.action_space.n
@@ -90,26 +218,16 @@ def main() -> None:
     print(f"Number of actions: {n_actions}")
 
     # --------------------------------------------------------------
-    # DQN agent
-    # --------------------------------------------------------------
-
-    agent = DQNAgent(
-        state_dim=state_dim,
-        n_actions=n_actions,
-        gamma=cfg["gamma"],
-        lr=cfg["lr"],
-        buffer_size=cfg["buffer_size"],
-        batch_size=cfg["batch_size"],
-        target_update_every=cfg["target_update_every"],
-        device=device,
-    )
-
-    # --------------------------------------------------------------
     # Logging / checkpoints
     # --------------------------------------------------------------
 
+    run_name = time.strftime("%Y%m%d-%H%M%S")
+
+    if args.resume is not None:
+        run_name += f"_from{start_episode}"
+
     writer = SummaryWriter(
-        log_dir="runs/dqn_turtlebot"
+        log_dir=f"runs/dqn_turtlebot/{run_name}"
     )
 
     os.makedirs("checkpoints", exist_ok=True)
@@ -118,8 +236,18 @@ def main() -> None:
     # Training state
     # --------------------------------------------------------------
 
-    epsilon = cfg["eps_start"]
-    total_steps = 0
+    # Last episode that has finished, for the interrupt checkpoint.
+    completed_episodes = start_episode
+
+    def save_checkpoint(path: str) -> None:
+        # Reads the loop's values at call time: the last finished
+        # episode, and the epsilon the next episode will use.
+        agent.save(
+            path,
+            episode=completed_episodes,
+            epsilon=epsilon,
+            total_steps=total_steps,
+        )
 
     try:
         # ----------------------------------------------------------
@@ -127,7 +255,7 @@ def main() -> None:
         # ----------------------------------------------------------
 
         for episode in range(
-            1,
+            start_episode + 1,
             cfg["max_episodes"] + 1,
         ):
             state, _ = env.reset()
@@ -137,6 +265,7 @@ def main() -> None:
             episode_length = 0
             collided = False
             episode_losses = []
+            step_durations = []
 
             # ------------------------------------------------------
             # Episode loop
@@ -145,7 +274,10 @@ def main() -> None:
             while not done:
 
                 # Initial experience collection.
-                if total_steps < cfg["learning_starts"]:
+                if (
+                    random_warmup
+                    and total_steps < cfg["learning_starts"]
+                ):
                     action = env.action_space.sample()
 
                 else:
@@ -194,6 +326,10 @@ def main() -> None:
                 if info.get("collision", False):
                     collided = True
 
+                step_durations.append(info["step_duration"])
+
+            completed_episodes = episode
+
             # ------------------------------------------------------
             # Exploration decay
             # ------------------------------------------------------
@@ -239,12 +375,33 @@ def main() -> None:
                     episode,
                 )
 
+            # Sim seconds per step. Values above CONTROL_DT mean the
+            # simulator is outrunning the agent loop.
+            mean_step_duration = (
+                sum(step_durations) / len(step_durations)
+            )
+            max_step_duration = max(step_durations)
+
+            writer.add_scalar(
+                "step_duration/mean",
+                mean_step_duration,
+                episode,
+            )
+
+            writer.add_scalar(
+                "step_duration/max",
+                max_step_duration,
+                episode,
+            )
+
             print(
                 f"ep {episode:4d} | "
                 f"reward {episode_reward:8.2f} | "
                 f"survived {episode_length:4d} steps | "
                 f"collided {int(collided)} | "
-                f"eps {epsilon:.3f}"
+                f"eps {epsilon:.3f} | "
+                f"dt {mean_step_duration:.3f}/"
+                f"{max_step_duration:.3f}"
             )
 
             # ------------------------------------------------------
@@ -257,7 +414,7 @@ def main() -> None:
                     f"dqn_turtlebot_{episode}.pt"
                 )
 
-                agent.save(checkpoint_path)
+                save_checkpoint(checkpoint_path)
 
                 print(
                     f"Saved checkpoint: "
@@ -268,11 +425,15 @@ def main() -> None:
         # Final checkpoint
         # ----------------------------------------------------------
 
+        # Named by episode like the periodic ones, not "final": the
+        # last checkpoint is not necessarily the best. rl.evaluate
+        # ranks them.
         final_checkpoint = (
-            "checkpoints/dqn_turtlebot_final.pt"
+            f"checkpoints/"
+            f"dqn_turtlebot_{completed_episodes}.pt"
         )
 
-        agent.save(final_checkpoint)
+        save_checkpoint(final_checkpoint)
 
         print(
             f"\nTraining complete.\n"
@@ -282,16 +443,46 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nTraining interrupted by user.")
 
+        # Name it after the last finished episode so it can be
+        # resumed with --resume directly.
         interrupted_checkpoint = (
-            "checkpoints/dqn_turtlebot_interrupted.pt"
+            f"checkpoints/"
+            f"dqn_turtlebot_interrupted_{completed_episodes}.pt"
         )
 
-        agent.save(interrupted_checkpoint)
+        # Ignore further Ctrl-C until the checkpoint is on disk.
+        previous_handler = signal.signal(
+            signal.SIGINT,
+            signal.SIG_IGN,
+        )
+
+        try:
+            save_checkpoint(interrupted_checkpoint)
+        finally:
+            signal.signal(signal.SIGINT, previous_handler)
 
         print(
             f"Saved interrupted checkpoint: "
             f"{interrupted_checkpoint}"
         )
+
+    except Exception:
+        # A crash (e.g. a sensor timeout) would otherwise lose every
+        # episode since the last periodic checkpoint. Save, then let the
+        # error propagate so it is still reported.
+        crashed_checkpoint = (
+            f"checkpoints/"
+            f"dqn_turtlebot_crashed_{completed_episodes}.pt"
+        )
+
+        save_checkpoint(crashed_checkpoint)
+
+        print(
+            f"\nTraining crashed. Saved checkpoint: "
+            f"{crashed_checkpoint}"
+        )
+
+        raise
 
     finally:
         env.close()
@@ -300,4 +491,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -1,4 +1,15 @@
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
-.venv/ 
+.venv/
+.claude/
+.vscode/
+runs/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Model checkpoints (large binaries; regenerate by training)
+checkpoints/
+docs/

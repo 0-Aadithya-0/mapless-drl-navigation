@@ -1,1 +1,8 @@
-# Python deps: torch, gymnasium, numpy, tensorboard, pyyaml
+# Installed into a venv created with --system-site-packages, so the
+# ROS 2 Jazzy Python packages (rclpy, messages) come from the system.
+torch
+gymnasium
+numpy
+tensorboard
+pyyaml
+pytest
