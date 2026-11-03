@@ -1,0 +1,97 @@
+Using device: cuda
+Resumed from checkpoints/dqn_turtlebot_crashed_513.pt after episode 513
+[INFO] [1793677504.671956959] [turtlebot3_rl_nav]: ROS interface initialized for world 'default'.
+State dimension: 24
+Number of actions: 4
+ep  514 | reward     7.04 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  515 | reward     7.20 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  516 | reward     7.97 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  517 | reward    -5.24 | survived  355 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  518 | reward     7.73 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  519 | reward     7.57 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  520 | reward     7.41 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  521 | reward     6.67 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  522 | reward     7.58 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  523 | reward     7.68 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  524 | reward     6.98 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  525 | reward     7.03 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  526 | reward     5.54 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  527 | reward    -5.90 | survived  373 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  528 | reward    -6.30 | survived  290 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  529 | reward     6.02 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  530 | reward     7.42 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  531 | reward     7.66 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  532 | reward    -8.52 | survived  107 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  533 | reward     6.28 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  534 | reward     7.56 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  535 | reward     7.86 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  536 | reward   -10.16 | survived  458 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  537 | reward     7.00 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  538 | reward     7.35 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  539 | reward    -5.98 | survived  270 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  540 | reward     5.62 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  541 | reward     4.27 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  542 | reward    -8.27 | survived  133 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  543 | reward    -1.46 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  544 | reward     6.39 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  545 | reward     8.21 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  546 | reward     7.21 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  547 | reward     6.85 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  548 | reward     5.80 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  549 | reward     6.97 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  550 | reward     6.76 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+Saved checkpoint: checkpoints/dqn_turtlebot_550.pt
+ep  551 | reward     6.81 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  552 | reward     5.83 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  553 | reward    -8.76 | survived   94 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  554 | reward   -10.44 | survived  389 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  555 | reward     7.95 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  556 | reward    -8.60 | survived   79 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  557 | reward     6.09 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  558 | reward     5.70 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  559 | reward     7.55 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  560 | reward     6.83 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  561 | reward     6.78 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  562 | reward     6.39 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  563 | reward     6.95 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  564 | reward   -10.99 | survived  319 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  565 | reward     7.35 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  566 | reward     6.95 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  567 | reward     6.23 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  568 | reward     6.37 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  569 | reward    -1.15 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  570 | reward     6.15 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  571 | reward     6.74 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  572 | reward     5.71 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  573 | reward     6.19 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  574 | reward    -4.09 | survived  424 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  575 | reward     6.20 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  576 | reward   -10.32 | survived  272 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  577 | reward     7.01 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  578 | reward     7.52 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  579 | reward     6.90 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  580 | reward     2.87 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  581 | reward     6.36 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  582 | reward     7.04 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  583 | reward    -8.40 | survived  114 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  584 | reward    -8.49 | survived  111 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  585 | reward     6.25 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  586 | reward     6.31 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  587 | reward     7.13 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  588 | reward     7.18 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.200
+ep  589 | reward     6.56 | survived  500 steps | collided 0 | eps 0.050 | dt 0.200/0.400
+ep  590 | reward    -8.52 | survived   95 steps | collided 1 | eps 0.050 | dt 0.202/0.400
+ep  591 | reward    -9.17 | survived  290 steps | collided 1 | eps 0.050 | dt 0.201/0.400
+ep  592 | reward    -8.68 | survived   89 steps | collided 1 | eps 0.050 | dt 0.200/0.200
+ep  593 | reward    -6.80 | survived  416 steps | collided 1 | eps 0.050 | dt 0.203/0.400
+ep  594 | reward    -5.89 | survived  289 steps | collided 1 | eps 0.050 | dt 0.204/0.400
+ep  595 | reward    -7.94 | survived  217 steps | collided 1 | eps 0.050 | dt 0.206/0.400
+ep  596 | reward     7.57 | survived  500 steps | collided 0 | eps 0.050 | dt 0.205/0.400
+ep  597 | reward    -8.61 | survived  103 steps | collided 1 | eps 0.050 | dt 0.202/0.400
+ep  598 | reward    -8.41 | survived   97 steps | collided 1 | eps 0.050 | dt 0.202/0.400
+ep  599 | reward    -8.98 | survived  318 steps | collided 1 | eps 0.050 | dt 0.204/0.400
+ep  600 | reward    -8.62 | survived  107 steps | collided 1 | eps 0.050 | dt 0.202/0.400
+Saved checkpoint: checkpoints/dqn_turtlebot_600.pt
+
+Training complete.
+Final checkpoint: checkpoints/dqn_turtlebot_final.pt

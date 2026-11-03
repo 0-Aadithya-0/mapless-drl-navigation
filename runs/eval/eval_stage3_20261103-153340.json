@@ -1,0 +1,791 @@
+{
+  "world": "stage3",
+  "created": "2026-11-03 14:55:15",
+  "config": "rl/configs/dqn.yaml",
+  "max_steps": 500,
+  "episodes_per_checkpoint": 20,
+  "checkpoints": {
+    "checkpoints/dqn_turtlebot_450.pt": {
+      "episodes": [
+        {
+          "reward": -4.754837075342206,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.24516292465773828,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.902280505386847,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.0977194946130953,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.631725287809951,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.3682747121899958,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.625500020889603,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.3744999791103432,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.900841780530217,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.0991582194697234,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.662651585122782,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.33734841487716927,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.601113303554463,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.39888669644548497,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.685038694392749,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.3149613056071927,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.642247306955605,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.35775269304434865,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.754866111242642,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.24513388875730513,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.742760485791412,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.2572395142085303,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.637072491551113,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.36292750844884525,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.622001905302717,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.37799809469723133,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.654659443141347,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.3453405568585938,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.643078224139524,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.35692177586042506,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.678653326372845,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.321346673627103,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.90158923231697,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.09841076768297258,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.644081410501296,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.3559185894986545,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.677903341291112,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.32209665870883564,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -4.90153098175648,
+          "steps": 500,
+          "collided": false,
+          "success": false,
+          "distance": 0.09846901824346149,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        }
+      ],
+      "summary": {
+        "episodes": 20,
+        "success_rate": 0.0,
+        "collision_rate": 0.0,
+        "avg_reward": -4.713221625669595,
+        "avg_steps": 500.0,
+        "avg_distance": 0.28677837433035247,
+        "dt_mean": 0.2,
+        "dt_max": 0.2
+      }
+    },
+    "checkpoints/dqn_turtlebot_500.pt": {
+      "episodes": [
+        {
+          "reward": 8.629907889281839,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.62990788928184,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -9.253291123410916,
+          "steps": 44,
+          "collided": true,
+          "success": false,
+          "distance": 1.1867088765890845,
+          "dt_sum": 8.8,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.404612729787596,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.40461272978758,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.065509514505527,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.065509514505521,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.822581198441807,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.822581198441807,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.32305945111605,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.323059451116048,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -9.4214723836028,
+          "steps": 58,
+          "collided": true,
+          "success": false,
+          "distance": 1.1585276163971996,
+          "dt_sum": 11.600000000000001,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.172970126055395,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.172970126055368,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.60283023579273,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.602830235792743,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.235123092542674,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.235123092542688,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.40289523150505,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.402895231505058,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.791218522112612,
+          "steps": 98,
+          "collided": true,
+          "success": false,
+          "distance": 2.188781477887389,
+          "dt_sum": 19.6,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.310495247312934,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.310495247312925,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.029318169151987,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.029318169151999,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.783441721590285,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.78344172159029,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 6.769757983835773,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 11.769757983835772,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.642008986616068,
+          "steps": 84,
+          "collided": true,
+          "success": false,
+          "distance": 2.1979910133839327,
+          "dt_sum": 16.8,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.405648024154027,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.40564802415401,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.898577387399894,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.898577387399905,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.580137089803372,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.580137089803381,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        }
+      ],
+      "summary": {
+        "episodes": 20,
+        "success_rate": 0.8,
+        "collision_rate": 0.2,
+        "avg_reward": 4.666443703826728,
+        "avg_steps": 414.2,
+        "avg_distance": 10.808443703826727,
+        "dt_mean": 0.19999999999999998,
+        "dt_max": 0.2
+      }
+    },
+    "checkpoints/dqn_turtlebot_550.pt": {
+      "episodes": [
+        {
+          "reward": 4.918189308622195,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 9.918189308622189,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 4.117227176885513,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 9.117227176885484,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 5.251293638899012,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 10.251293638899016,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 0.9447058050779666,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 5.9447058050779695,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.520885723626171,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.520885723626154,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 3.5709057392680235,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 8.570905739268005,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 5.093455910069272,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 10.093455910069295,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 2.4813446237923715,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 7.481344623792361,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.516623425090917,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.516623425090916,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 5.979690431932809,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 10.979690431932811,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.262608742768569,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.262608742768572,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.77286097447946,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.772860974479466,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 4.397458491465612,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 9.397458491465612,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 3.79596649339022,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 8.795966493390194,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 7.0680991667101,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 12.06809916671009,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 8.234399577193512,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 13.234399577193514,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 4.8828340625222415,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 9.882834062522228,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 6.638802386860095,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 11.638802386860103,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 0.5910227431924167,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 5.591022743192422,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": 4.939944742869379,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 9.939944742869335,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        }
+      ],
+      "summary": {
+        "episodes": 20,
+        "success_rate": 1.0,
+        "collision_rate": 0.0,
+        "avg_reward": 5.198915958235792,
+        "avg_steps": 500.0,
+        "avg_distance": 10.198915958235785,
+        "dt_mean": 0.2,
+        "dt_max": 0.2
+      }
+    },
+    "checkpoints/dqn_turtlebot_600.pt": {
+      "episodes": [
+        {
+          "reward": -8.056179484982703,
+          "steps": 115,
+          "collided": true,
+          "success": false,
+          "distance": 3.0938205150172977,
+          "dt_sum": 23.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.114947464153307,
+          "steps": 113,
+          "collided": true,
+          "success": false,
+          "distance": 3.0150525358466913,
+          "dt_sum": 22.6,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -1.6892176725467762,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 3.3107823274532224,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -9.304283444257214,
+          "steps": 63,
+          "collided": true,
+          "success": false,
+          "distance": 1.3257165557427861,
+          "dt_sum": 12.600000000000001,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.201381689476817,
+          "steps": 236,
+          "collided": true,
+          "success": false,
+          "distance": 4.158618310523183,
+          "dt_sum": 47.2,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -1.641658409884098,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 3.3583415901158977,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -1.4609586880301313,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 3.5390413119698643,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -7.890604285905409,
+          "steps": 187,
+          "collided": true,
+          "success": false,
+          "distance": 3.9793957140945886,
+          "dt_sum": 37.4,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -9.280296126462769,
+          "steps": 238,
+          "collided": true,
+          "success": false,
+          "distance": 3.09970387353723,
+          "dt_sum": 47.6,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -7.89366818201758,
+          "steps": 200,
+          "collided": true,
+          "success": false,
+          "distance": 4.106331817982421,
+          "dt_sum": 40.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -1.2525366718819837,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 3.7474633281180165,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -9.535109790336785,
+          "steps": 73,
+          "collided": true,
+          "success": false,
+          "distance": 1.1948902096632148,
+          "dt_sum": 14.600000000000001,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.702949414291671,
+          "steps": 169,
+          "collided": true,
+          "success": false,
+          "distance": 2.9870505857083276,
+          "dt_sum": 33.800000000000004,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.17614055242292,
+          "steps": 109,
+          "collided": true,
+          "success": false,
+          "distance": 2.9138594475770807,
+          "dt_sum": 21.8,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.945708776941553,
+          "steps": 146,
+          "collided": true,
+          "success": false,
+          "distance": 2.5142912230584473,
+          "dt_sum": 29.200000000000003,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -7.626028084701021,
+          "steps": 174,
+          "collided": true,
+          "success": false,
+          "distance": 4.113971915298973,
+          "dt_sum": 34.800000000000004,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.393885923325724,
+          "steps": 148,
+          "collided": true,
+          "success": false,
+          "distance": 3.0861140766742765,
+          "dt_sum": 29.6,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.22406704490813,
+          "steps": 105,
+          "collided": true,
+          "success": false,
+          "distance": 2.8259329550918646,
+          "dt_sum": 21.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -1.3137231541435512,
+          "steps": 500,
+          "collided": false,
+          "success": true,
+          "distance": 3.686276845856445,
+          "dt_sum": 100.0,
+          "dt_max": 0.2
+        },
+        {
+          "reward": -8.19467531821752,
+          "steps": 107,
+          "collided": true,
+          "success": false,
+          "distance": 2.875324681782477,
+          "dt_sum": 21.400000000000002,
+          "dt_max": 0.2
+        }
+      ],
+      "summary": {
+        "episodes": 20,
+        "success_rate": 0.25,
+        "collision_rate": 0.75,
+        "avg_reward": -6.694901008944382,
+        "avg_steps": 234.15,
+        "avg_distance": 3.146598991055616,
+        "dt_mean": 0.2,
+        "dt_max": 0.2
+      }
+    }
+  },
+  "ranking": [
+    "checkpoints/dqn_turtlebot_500.pt",
+    "checkpoints/dqn_turtlebot_550.pt",
+    "checkpoints/dqn_turtlebot_600.pt",
+    "checkpoints/dqn_turtlebot_450.pt"
+  ]
+}

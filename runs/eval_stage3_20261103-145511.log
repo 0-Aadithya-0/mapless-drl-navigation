@@ -1,0 +1,101 @@
+[INFO] [1793717715.254876099] [turtlebot3_rl_nav]: ROS interface initialized for world 'default'.
+Using device: cuda
+
+==== checkpoints/dqn_turtlebot_450.pt on stage3 ====
+ep   1 | reward    -4.75 | survived  500 steps | collided 0 | distance  0.25 m | dt 0.200/0.200
+ep   2 | reward    -4.90 | survived  500 steps | collided 0 | distance  0.10 m | dt 0.200/0.200
+ep   3 | reward    -4.63 | survived  500 steps | collided 0 | distance  0.37 m | dt 0.200/0.200
+ep   4 | reward    -4.63 | survived  500 steps | collided 0 | distance  0.37 m | dt 0.200/0.200
+ep   5 | reward    -4.90 | survived  500 steps | collided 0 | distance  0.10 m | dt 0.200/0.200
+ep   6 | reward    -4.66 | survived  500 steps | collided 0 | distance  0.34 m | dt 0.200/0.200
+ep   7 | reward    -4.60 | survived  500 steps | collided 0 | distance  0.40 m | dt 0.200/0.200
+ep   8 | reward    -4.69 | survived  500 steps | collided 0 | distance  0.31 m | dt 0.200/0.200
+ep   9 | reward    -4.64 | survived  500 steps | collided 0 | distance  0.36 m | dt 0.200/0.200
+ep  10 | reward    -4.75 | survived  500 steps | collided 0 | distance  0.25 m | dt 0.200/0.200
+ep  11 | reward    -4.74 | survived  500 steps | collided 0 | distance  0.26 m | dt 0.200/0.200
+ep  12 | reward    -4.64 | survived  500 steps | collided 0 | distance  0.36 m | dt 0.200/0.200
+ep  13 | reward    -4.62 | survived  500 steps | collided 0 | distance  0.38 m | dt 0.200/0.200
+ep  14 | reward    -4.65 | survived  500 steps | collided 0 | distance  0.35 m | dt 0.200/0.200
+ep  15 | reward    -4.64 | survived  500 steps | collided 0 | distance  0.36 m | dt 0.200/0.200
+ep  16 | reward    -4.68 | survived  500 steps | collided 0 | distance  0.32 m | dt 0.200/0.200
+ep  17 | reward    -4.90 | survived  500 steps | collided 0 | distance  0.10 m | dt 0.200/0.200
+ep  18 | reward    -4.64 | survived  500 steps | collided 0 | distance  0.36 m | dt 0.200/0.200
+ep  19 | reward    -4.68 | survived  500 steps | collided 0 | distance  0.32 m | dt 0.200/0.200
+ep  20 | reward    -4.90 | survived  500 steps | collided 0 | distance  0.10 m | dt 0.200/0.200
+
+==== checkpoints/dqn_turtlebot_500.pt on stage3 ====
+ep   1 | reward     8.63 | survived  500 steps | collided 0 | distance 13.63 m | dt 0.200/0.200
+ep   2 | reward    -9.25 | survived   44 steps | collided 1 | distance  1.19 m | dt 0.200/0.200
+ep   3 | reward     8.40 | survived  500 steps | collided 0 | distance 13.40 m | dt 0.200/0.200
+ep   4 | reward     8.07 | survived  500 steps | collided 0 | distance 13.07 m | dt 0.200/0.200
+ep   5 | reward     7.82 | survived  500 steps | collided 0 | distance 12.82 m | dt 0.200/0.200
+ep   6 | reward     8.32 | survived  500 steps | collided 0 | distance 13.32 m | dt 0.200/0.200
+ep   7 | reward    -9.42 | survived   58 steps | collided 1 | distance  1.16 m | dt 0.200/0.200
+ep   8 | reward     8.17 | survived  500 steps | collided 0 | distance 13.17 m | dt 0.200/0.200
+ep   9 | reward     7.60 | survived  500 steps | collided 0 | distance 12.60 m | dt 0.200/0.200
+ep  10 | reward     8.24 | survived  500 steps | collided 0 | distance 13.24 m | dt 0.200/0.200
+ep  11 | reward     8.40 | survived  500 steps | collided 0 | distance 13.40 m | dt 0.200/0.200
+ep  12 | reward    -8.79 | survived   98 steps | collided 1 | distance  2.19 m | dt 0.200/0.200
+ep  13 | reward     8.31 | survived  500 steps | collided 0 | distance 13.31 m | dt 0.200/0.200
+ep  14 | reward     8.03 | survived  500 steps | collided 0 | distance 13.03 m | dt 0.200/0.200
+ep  15 | reward     7.78 | survived  500 steps | collided 0 | distance 12.78 m | dt 0.200/0.200
+ep  16 | reward     6.77 | survived  500 steps | collided 0 | distance 11.77 m | dt 0.200/0.200
+ep  17 | reward    -8.64 | survived   84 steps | collided 1 | distance  2.20 m | dt 0.200/0.200
+ep  18 | reward     8.41 | survived  500 steps | collided 0 | distance 13.41 m | dt 0.200/0.200
+ep  19 | reward     7.90 | survived  500 steps | collided 0 | distance 12.90 m | dt 0.200/0.200
+ep  20 | reward     8.58 | survived  500 steps | collided 0 | distance 13.58 m | dt 0.200/0.200
+
+==== checkpoints/dqn_turtlebot_550.pt on stage3 ====
+ep   1 | reward     4.92 | survived  500 steps | collided 0 | distance  9.92 m | dt 0.200/0.200
+ep   2 | reward     4.12 | survived  500 steps | collided 0 | distance  9.12 m | dt 0.200/0.200
+ep   3 | reward     5.25 | survived  500 steps | collided 0 | distance 10.25 m | dt 0.200/0.200
+ep   4 | reward     0.94 | survived  500 steps | collided 0 | distance  5.94 m | dt 0.200/0.200
+ep   5 | reward     7.52 | survived  500 steps | collided 0 | distance 12.52 m | dt 0.200/0.200
+ep   6 | reward     3.57 | survived  500 steps | collided 0 | distance  8.57 m | dt 0.200/0.200
+ep   7 | reward     5.09 | survived  500 steps | collided 0 | distance 10.09 m | dt 0.200/0.200
+ep   8 | reward     2.48 | survived  500 steps | collided 0 | distance  7.48 m | dt 0.200/0.200
+ep   9 | reward     7.52 | survived  500 steps | collided 0 | distance 12.52 m | dt 0.200/0.200
+ep  10 | reward     5.98 | survived  500 steps | collided 0 | distance 10.98 m | dt 0.200/0.200
+ep  11 | reward     8.26 | survived  500 steps | collided 0 | distance 13.26 m | dt 0.200/0.200
+ep  12 | reward     7.77 | survived  500 steps | collided 0 | distance 12.77 m | dt 0.200/0.200
+ep  13 | reward     4.40 | survived  500 steps | collided 0 | distance  9.40 m | dt 0.200/0.200
+ep  14 | reward     3.80 | survived  500 steps | collided 0 | distance  8.80 m | dt 0.200/0.200
+ep  15 | reward     7.07 | survived  500 steps | collided 0 | distance 12.07 m | dt 0.200/0.200
+ep  16 | reward     8.23 | survived  500 steps | collided 0 | distance 13.23 m | dt 0.200/0.200
+ep  17 | reward     4.88 | survived  500 steps | collided 0 | distance  9.88 m | dt 0.200/0.200
+ep  18 | reward     6.64 | survived  500 steps | collided 0 | distance 11.64 m | dt 0.200/0.200
+ep  19 | reward     0.59 | survived  500 steps | collided 0 | distance  5.59 m | dt 0.200/0.200
+ep  20 | reward     4.94 | survived  500 steps | collided 0 | distance  9.94 m | dt 0.200/0.200
+
+==== checkpoints/dqn_turtlebot_600.pt on stage3 ====
+ep   1 | reward    -8.06 | survived  115 steps | collided 1 | distance  3.09 m | dt 0.200/0.200
+ep   2 | reward    -8.11 | survived  113 steps | collided 1 | distance  3.02 m | dt 0.200/0.200
+ep   3 | reward    -1.69 | survived  500 steps | collided 0 | distance  3.31 m | dt 0.200/0.200
+ep   4 | reward    -9.30 | survived   63 steps | collided 1 | distance  1.33 m | dt 0.200/0.200
+ep   5 | reward    -8.20 | survived  236 steps | collided 1 | distance  4.16 m | dt 0.200/0.200
+ep   6 | reward    -1.64 | survived  500 steps | collided 0 | distance  3.36 m | dt 0.200/0.200
+ep   7 | reward    -1.46 | survived  500 steps | collided 0 | distance  3.54 m | dt 0.200/0.200
+ep   8 | reward    -7.89 | survived  187 steps | collided 1 | distance  3.98 m | dt 0.200/0.200
+ep   9 | reward    -9.28 | survived  238 steps | collided 1 | distance  3.10 m | dt 0.200/0.200
+ep  10 | reward    -7.89 | survived  200 steps | collided 1 | distance  4.11 m | dt 0.200/0.200
+ep  11 | reward    -1.25 | survived  500 steps | collided 0 | distance  3.75 m | dt 0.200/0.200
+ep  12 | reward    -9.54 | survived   73 steps | collided 1 | distance  1.19 m | dt 0.200/0.200
+ep  13 | reward    -8.70 | survived  169 steps | collided 1 | distance  2.99 m | dt 0.200/0.200
+ep  14 | reward    -8.18 | survived  109 steps | collided 1 | distance  2.91 m | dt 0.200/0.200
+ep  15 | reward    -8.95 | survived  146 steps | collided 1 | distance  2.51 m | dt 0.200/0.200
+ep  16 | reward    -7.63 | survived  174 steps | collided 1 | distance  4.11 m | dt 0.200/0.200
+ep  17 | reward    -8.39 | survived  148 steps | collided 1 | distance  3.09 m | dt 0.200/0.200
+ep  18 | reward    -8.22 | survived  105 steps | collided 1 | distance  2.83 m | dt 0.200/0.200
+ep  19 | reward    -1.31 | survived  500 steps | collided 0 | distance  3.69 m | dt 0.200/0.200
+ep  20 | reward    -8.19 | survived  107 steps | collided 1 | distance  2.88 m | dt 0.200/0.200
+
+==== Evaluation on stage3 (best first) ====
+rank checkpoint                          eps  success  collide  reward  survival  distance          dt
+   1 dqn_turtlebot_500.pt                 20    80.0%    20.0%    4.67     414.2   10.81 m 0.200/0.200
+   2 dqn_turtlebot_550.pt                 20   100.0%     0.0%    5.20     500.0   10.20 m 0.200/0.200
+   3 dqn_turtlebot_600.pt                 20    25.0%    75.0%   -6.69     234.2    3.15 m 0.200/0.200
+   4 dqn_turtlebot_450.pt                 20     0.0%     0.0%   -4.71     500.0    0.29 m 0.200/0.200
+
+Best checkpoint: checkpoints/dqn_turtlebot_500.pt
+
+Results saved: runs/eval/eval_stage3_20261103-153340.json

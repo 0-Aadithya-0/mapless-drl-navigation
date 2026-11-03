@@ -1,0 +1,134 @@
+<?xml version='1.0'?>
+<sdf version='1.8'>
+  <!--
+    The four Stage 2 posts as ONE rigid body, for the moving-obstacle
+    world (Stage 3). turtlebot3_gazebo::ObstaclesPlugin moves the model
+    by overwriting its pose. With four separate falling links resting
+    on the floor, every overwrite left them slightly sunk into the
+    ground, and the contact solver threw them out: up to 5.7 m in the
+    air, or dragged below the floor, worse at the 5 ms physics step.
+    One link, no gravity and 5 mm of clearance never touches the
+    ground, so there is nothing to resolve. Same size and positions
+    as the "obstacles" model, which Stage 2 keeps (static posts).
+  -->
+  <model name='obstacles'>
+    <static>false</static>
+
+    <link name='obstacles_body'>
+      <pose>0 0 0.255 0 0 0</pose>
+      <gravity>false</gravity>
+      <!-- heavy, so a bump from the robot barely moves it -->
+      <inertial>
+        <mass>50</mass>
+        <inertia>
+          <ixx>60</ixx>
+          <iyy>60</iyy>
+          <izz>100</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <collision name='obstacle_1_collision'>
+        <pose>-1.0 -1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='obstacle_1_visual'>
+        <pose>-1.0 -1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+
+      <collision name='obstacle_2_collision'>
+        <pose>-1.0 1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='obstacle_2_visual'>
+        <pose>-1.0 1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+
+      <collision name='obstacle_3_collision'>
+        <pose>1.0 -1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='obstacle_3_visual'>
+        <pose>1.0 -1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+
+      <collision name='obstacle_4_collision'>
+        <pose>1.0 1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='obstacle_4_visual'>
+        <pose>1.0 1.0 0 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>0.5</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

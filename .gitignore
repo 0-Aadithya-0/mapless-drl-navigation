@@ -4,7 +4,7 @@ ros2_ws/log/
 .venv/
 .claude/
 .vscode/
-runs/
+
 
 # Python bytecode
 __pycache__/

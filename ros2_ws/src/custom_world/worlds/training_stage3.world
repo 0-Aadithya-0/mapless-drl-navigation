@@ -71,7 +71,9 @@
       <uri>model://turtlebot3_dqn_world</uri>
     </include>
     <include>
-      <uri>model://turtlebot3_dqn_world/obstacles</uri>
+      <!-- obstacles_moving, not obstacles: the plugin overwrites the
+           pose, which flings floor-resting links (see its model.sdf) -->
+      <uri>model://turtlebot3_dqn_world/obstacles_moving</uri>
       <plugin name="turtlebot3_gazebo::ObstaclesPlugin" filename="libobstacles.so"/>
     </include>
 
